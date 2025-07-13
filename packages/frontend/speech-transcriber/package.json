@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite --open",
-  "build": "tsc -b && vite build",
-  "lint": "eslint .",
-  "preview": "vite preview"
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.50.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
