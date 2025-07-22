@@ -3,6 +3,7 @@ import { UserProvider, useUser } from './contexts/UserContext'
 import LoginPage from './features/auth/components/pages/LoginPage'
 import RegisterPage from './features/auth/components/RegisterForm'
 import DashboardPage from './features/Dashboard/pages/DashboardPage'
+import NavBar from './components/NavBar';
 
 
 function AppRoutes() {
@@ -32,6 +33,7 @@ function App() {
   return (
     <UserProvider>
       <Router>
+        <NavBar />
         <AppRoutes />
       </Router>
     </UserProvider>
