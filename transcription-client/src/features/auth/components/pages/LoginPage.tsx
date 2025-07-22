@@ -9,7 +9,7 @@ function LoginPage() {
     await logoutUser()
   }
   return (
-    <div>
+    <div style={{ minHeight: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingTop: '60px', boxSizing: 'border-box' }}>
       {user ? (
         <>
           <h2>ברוכה הבאה, {user.email}!</h2>
