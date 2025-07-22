@@ -2,7 +2,11 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../../supabase/supabaseClient'
 import { v4 as uuidv4 } from 'uuid'
 
-function UploadAudioForm() {
+interface Props {
+  onUploadSuccess: () => void
+}
+
+function UploadAudioForm({ onUploadSuccess }: Props) {
   const [file, setFile] = useState<File | null>(null)
   const [message, setMessage] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
@@ -78,6 +82,7 @@ function UploadAudioForm() {
     } else {
       setMessage('✅ קובץ הועלה ונשמר בהצלחה!')
       setFile(null)
+      onUploadSuccess() // 🔁 ריענון מיידי של הרשימה
     }
   }
 
