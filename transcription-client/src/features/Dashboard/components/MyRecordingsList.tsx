@@ -42,10 +42,9 @@ function MyRecordingsList() {
     const userId = userData?.user?.id
     if (!userId) return
 
-    const fileName = rec.url.split('/').pop() // רק שם הקובץ
+    const fileName = rec.url.split('/').pop()
     const filePath = `${userId}/${fileName}`
 
-    // 1. מחיקה מה-Storage
     const { error: storageError } = await supabase.storage
       .from('recordings')
       .remove([filePath])
@@ -55,7 +54,6 @@ function MyRecordingsList() {
       return
     }
 
-    // 2. מחיקה מה-Database
     const { error: dbError } = await supabase
       .from('recordings')
       .delete()
@@ -69,30 +67,46 @@ function MyRecordingsList() {
   }
 
   return (
-    <div style={{ marginTop: '30px' }}>
-      <h2>🎧 הקבצים שהעלתי</h2>
+    <div style={{ marginTop: '30px', direction: 'rtl' }}>
+      <h2>📁 הקבצים שהעליתי</h2>
       {loading ? (
-        <p>טוען קבצים...</p>
+        <p>⏳ טוען קבצים...</p>
       ) : recordings.length === 0 ? (
-        <p>לא נמצאו קבצים</p>
+        <p>אין קבצים להצגה</p>
       ) : (
-        <ul>
+        <ul style={{ listStyle: 'none', padding: 0 }}>
           {recordings.map((rec) => (
-            <li key={rec.id} style={{ marginBottom: '20px' }}>
-              <strong>{rec.file_name}</strong>
-              <br />
-              <audio controls src={rec.url} style={{ width: '100%' }} />
-              <br />
+            <li
+              key={rec.id}
+              style={{
+                marginBottom: '25px',
+                border: '1px solid #ccc',
+                borderRadius: '8px',
+                padding: '10px 15px',
+                textAlign: 'right',
+              }}
+            >
+              <div style={{ fontWeight: 'bold' }}>{rec.file_name}</div>
+              <div style={{ fontSize: '0.9em', color: '#666' }}>
+                {new Date(rec.created_at).toLocaleDateString('he-IL', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </div>
+
+              <audio controls src={rec.url} style={{ width: '100%', marginTop: '10px' }} />
+
               <button
                 onClick={() => handleDelete(rec)}
                 style={{
-                  marginTop: '5px',
+                  marginTop: '10px',
+                  backgroundColor: '#d9534f',
                   color: 'white',
-                  background: 'red',
                   border: 'none',
-                  padding: '5px 10px',
-                  cursor: 'pointer',
+                  padding: '6px 12px',
                   borderRadius: '5px',
+                  cursor: 'pointer',
                 }}
               >
                 🗑️ מחק קובץ
