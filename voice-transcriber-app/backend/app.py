@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 import requests
 import yt_dlp
 import uuid
@@ -8,15 +9,17 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from supabase import create_client, Client
 
+
+load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
 UPLOAD_FOLDER = 'storage'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-SUPABASE_URL = 'https://lfrpgixrxacelcqhlamz.supabase.co'
-SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmcnBnaXhyeGFjZWxjcWhsYW16Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE4OTQ4MzIsImV4cCI6MjA2NzQ3MDgzMn0.vtdeJT8Aig57TtSIlfoC0RRouDIRsBb0-PvEjcbmVHs'
-SUPABASE_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmcnBnaXhyeGFjZWxjcWhsYW16Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTg5NDgzMiwiZXhwIjoyMDY3NDcwODMyfQ.NrJKkMuvvq-MC0XshxawRhDZFAGZV3zFUCWC-Y94fvE' 
+SUPABASE_URL = os.getenv('SUPABASE_URL')
+SUPABASE_ANON_KEY = os.getenv('SUPABASE_ANON_KEY')
+SUPABASE_SERVICE_ROLE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY')
 
 def get_user_id_from_jwt(jwt_token):
     response = requests.get(
