@@ -10,19 +10,27 @@ function UploadAudioForm({ onUploadSuccess }: Props) {
   const [file, setFile] = useState<File | null>(null)
   const [message, setMessage] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
+  const [token, setToken] = useState<string | null>(null)
+  const [youtubeUrl, setYoutubeUrl] = useState('')
+  const [ytMessage, setYtMessage] = useState('')
 
   useEffect(() => {
     const getSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession()
-      if (error) {
-        console.error('שגיאה בקבלת session:', error.message)
+      if (error || !session) {
+        console.error('שגיאה בקבלת session:', error?.message)
         setMessage('שגיאה בזיהוי המשתמש')
         return
       }
 
-      const uid = session?.user.id ?? null
-      console.log('userId מתוך session:', uid)
-      setUserId(uid)
+      setUserId(session.user.id)
+      const accessToken = session.access_token
+      if (!accessToken) {
+        console.error('לא נמצא access token')
+        setMessage('שגיאה בקבלת טוקן')
+        return
+      }
+      setToken(accessToken)
     }
 
     getSession()
@@ -36,7 +44,6 @@ function UploadAudioForm({ onUploadSuccess }: Props) {
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault()
-
     if (!file || !userId) {
       setMessage('אין קובץ או משתמש מחובר')
       return
@@ -46,13 +53,11 @@ function UploadAudioForm({ onUploadSuccess }: Props) {
     const fileName = `${uuidv4()}.${fileExt}`
     const filePath = `${userId}/${fileName}`
 
-    // 1. העלאת הקובץ ל־Storage
     const { error: storageError } = await supabase.storage
       .from('recordings')
       .upload(filePath, file)
 
     if (storageError) {
-      console.error('שגיאה בהעלאה ל־Storage:', storageError)
       setMessage(`שגיאה בהעלאה: ${storageError.message}`)
       return
     }
@@ -63,35 +68,86 @@ function UploadAudioForm({ onUploadSuccess }: Props) {
 
     const publicUrl = publicData?.publicUrl
 
-    console.log('url של הקובץ:', publicUrl)
-
-    // 2. שמירת פרטי ההקלטה בטבלה
     const { error: insertError } = await supabase
       .from('recordings')
-      .insert([
-        {
-          user_id: userId,
-          file_name: file.name,
-          url: publicUrl,
-        },
-      ])
+      .insert([{
+        user_id: userId,
+        file_name: file.name,
+        url: publicUrl,
+      }])
 
     if (insertError) {
-      console.error('שגיאה בהכנסת שורה לטבלה:', insertError)
       setMessage(`שגיאה בשמירה במסד: ${insertError.message}`)
     } else {
       setMessage('✅ קובץ הועלה ונשמר בהצלחה!')
       setFile(null)
-      onUploadSuccess() // 🔁 ריענון מיידי של הרשימה
+      onUploadSuccess()
+    }
+  }
+
+  const handleYoutubeDownload = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setYtMessage('')
+    if (!youtubeUrl || !userId) {
+  setYtMessage('יש להזין קישור ולהיות מחובר')
+  return
+}
+
+const session = (await supabase.auth.getSession()).data.session
+const token = session?.access_token
+if (!token) {
+  setYtMessage('לא נמצא access token עדכני')
+  return
+}
+
+
+    try {
+      setYtMessage('מוריד ומעלה...')
+      const res = await fetch('http://localhost:5000/download_youtube_audio', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // ✅ תוספת חשובה
+        },
+        body: JSON.stringify({
+          url: youtubeUrl,
+          user_id: userId
+        })
+      })
+
+      const data = await res.json()
+      if (data.success) {
+        setYtMessage('✅ האודיו נוסף לרשימת ההקלטות!')
+        setYoutubeUrl('')
+        onUploadSuccess()
+      } else {
+        setYtMessage('שגיאה: ' + (data.error || ''))
+      }
+    } catch (err: any) {
+      setYtMessage('שגיאה: ' + (err.message || err))
     }
   }
 
   return (
-    <form onSubmit={handleUpload} style={{ marginTop: '30px' }}>
-      <input type="file" accept="audio/*" onChange={handleFileChange} />
-      <button type="submit" style={{ marginLeft: '10px' }}>העלה</button>
-      {message && <p>{message}</p>}
-    </form>
+    <>
+      <form onSubmit={handleUpload} style={{ marginTop: '30px' }}>
+        <input type="file" accept="audio/*" onChange={handleFileChange} />
+        <button type="submit" style={{ marginLeft: '10px' }}>העלה</button>
+        {message && <p>{message}</p>}
+      </form>
+
+      <form onSubmit={handleYoutubeDownload} style={{ marginTop: '20px', direction: 'rtl' }}>
+        <input
+          type="text"
+          placeholder="הדבק כאן קישור ליוטיוב"
+          value={youtubeUrl}
+          onChange={e => setYoutubeUrl(e.target.value)}
+          style={{ width: '60%', marginLeft: '10px' }}
+        />
+        <button type="submit">הורד מיוטיוב</button>
+        {ytMessage && <p>{ytMessage}</p>}
+      </form>
+    </>
   )
 }
 
