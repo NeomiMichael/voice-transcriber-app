@@ -1,0 +1,6 @@
+Flask
+yt-dlp 
+supabase 
+python-dotenv
+requests
+flask_cors
