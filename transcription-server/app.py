@@ -9,6 +9,8 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from supabase import create_client, Client
 
+with open("/app/inside_docker.txt", "w") as f:
+    f.write("Hello from Docker")
 
 load_dotenv()
 app = Flask(__name__)
@@ -71,7 +73,7 @@ def download_youtube_audio():
             }],
             'verify': False,
             'nocheckcertificate': True,
-            'ffmpeg_location': r'C:\Users\1\Downloads\ffmpeg-7.1.1-essentials_build\ffmpeg-7.1.1-essentials_build\bin\ffmpeg.exe',
+            'ffmpeg_location': '/usr/bin/ffmpeg',
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -112,5 +114,5 @@ def download_youtube_audio():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
