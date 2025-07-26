@@ -1,4 +1,3 @@
-# Dockerfile (בתוך transcription-server)
 FROM python:3.11
 
 RUN apt-get update && apt-get install -y \
@@ -6,8 +5,9 @@ RUN apt-get update && apt-get install -y \
     gcc \
     libffi-dev \
     libssl-dev \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    ca-certificates && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 

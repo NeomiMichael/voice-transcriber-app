@@ -16,6 +16,9 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
+UPLOAD_FOLDER = 'storage'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 SUPABASE_URL = os.getenv('SUPABASE_URL')
 SUPABASE_ANON_KEY = os.getenv('SUPABASE_ANON_KEY')
 SUPABASE_SERVICE_ROLE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY')
@@ -60,18 +63,9 @@ def download_youtube_audio():
         if not url:
             return jsonify({'error': 'Missing YouTube URL'}), 400
 
-        # נוריד את המידע על הסרטון כדי לקבל את השם מראש
-        with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
-            info = ydl.extract_info(url, download=False)
-            video_title = info.get('title', 'audio')
-            safe_title = ''.join(c for c in video_title if c.isalnum() or c in (' ', '_', '-')).rstrip()
-            file_base_name = safe_title.strip().replace(' ', '_')
-            output_filename = f"{file_base_name}.mp3"
-
-        # הגדרות להורדה עם שם המקורי
         ydl_opts = {
             'format': 'bestaudio/best',
-            'outtmpl': f'{file_base_name}.%(ext)s',
+            'outtmpl': os.path.join(UPLOAD_FOLDER, '%(title)s.%(ext)s'),
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
@@ -80,43 +74,41 @@ def download_youtube_audio():
             'verify': False,
             'nocheckcertificate': True,
             'ffmpeg_location': '/usr/bin/ffmpeg',
-            'quiet': True
         }
 
-        # הורדה
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
+            info = ydl.extract_info(url, download=True)
+            filename = ydl.prepare_filename(info)
+            audio_file = os.path.splitext(filename)[0] + '.mp3'
 
-        # קריאה מהדיסק
-        with open(output_filename, 'rb') as f:
+        file_name = f"{uuid.uuid4()}.mp3"
+        file_path = f"{user_id}/{file_name}"
+
+        # העלאה ישירה ל-Supabase Storage
+        with open(audio_file, 'rb') as f:
             file_data = f.read()
-
-        file_path = f"{user_id}/{output_filename}"
-
-        # העלאה ל־Supabase
         upload_response = upload_to_supabase_storage(file_path, file_data, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
         print("Upload response:", upload_response.status_code, upload_response.text)
         if upload_response.status_code not in [200, 201]:
             return jsonify({'error': 'Failed to upload to Supabase Storage', 'details': upload_response.text}), 500
 
-        # מחיקת הקובץ
-        os.remove(output_filename)
-
-        # יצירת קישור ציבורי
+        # קבלת public URL
         public_url = f"{SUPABASE_URL}/storage/v1/object/public/recordings/{file_path}"
 
-        # הכנסת רשומה למסד
+        # שמירה במסד
         supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
         insert_res = supabase.table('recordings').insert({
             'user_id': user_id,
-            'file_name': output_filename,
+            'file_name': info.get('title', file_name) + '.mp3',
             'url': public_url
         }).execute()
-
+        print("Insert DB response:", insert_res)
         if not insert_res.data:
             return jsonify({'error': 'Failed to insert to DB', 'details': str(insert_res)}), 500
 
-        return jsonify({'success': True, 'file': output_filename, 'public_url': public_url}), 200
+        os.remove(audio_file)
+
+        return jsonify({'success': True, 'file': file_name, 'public_url': public_url}), 200
 
     except Exception as e:
         traceback.print_exc()
