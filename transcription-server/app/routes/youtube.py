@@ -1,20 +1,14 @@
 import os
-from dotenv import load_dotenv
-import requests
-import yt_dlp
 import uuid
+import requests
 import traceback
+import yt_dlp
 import mimetypes
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+
+from flask import Blueprint, request, jsonify
 from supabase import create_client, Client
 
-with open("/app/inside_docker.txt", "w") as f:
-    f.write("Hello from Docker")
-
-load_dotenv()
-app = Flask(__name__)
-CORS(app)
+youtube_bp = Blueprint('youtube', __name__)
 
 UPLOAD_FOLDER = 'storage'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -22,6 +16,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 SUPABASE_URL = os.getenv('SUPABASE_URL')
 SUPABASE_ANON_KEY = os.getenv('SUPABASE_ANON_KEY')
 SUPABASE_SERVICE_ROLE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY')
+
 
 def get_user_id_from_jwt(jwt_token):
     response = requests.get(
@@ -36,6 +31,7 @@ def get_user_id_from_jwt(jwt_token):
         return None
     return response.json().get("id")
 
+
 def upload_to_supabase_storage(file_path, file_data, supabase_url, service_role_key, bucket='recordings'):
     storage_url = f"{supabase_url}/storage/v1/object/{bucket}/{file_path}"
     headers = {
@@ -46,7 +42,8 @@ def upload_to_supabase_storage(file_path, file_data, supabase_url, service_role_
     response = requests.post(storage_url, headers=headers, data=file_data)
     return response
 
-@app.route('/download_youtube_audio', methods=['POST'])
+
+@youtube_bp.route('/download_youtube_audio', methods=['POST'])
 def download_youtube_audio():
     try:
         auth_header = request.headers.get('Authorization')
@@ -66,13 +63,12 @@ def download_youtube_audio():
         ydl_opts = {
             'format': 'bestaudio/best',
             'outtmpl': os.path.join(UPLOAD_FOLDER, '%(title)s.%(ext)s'),
+            'nocheckcertificate': True,
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }],
-            'verify': False,
-            'nocheckcertificate': True,
             'ffmpeg_location': '/usr/bin/ffmpeg',
         }
 
@@ -84,27 +80,22 @@ def download_youtube_audio():
         file_name = f"{uuid.uuid4()}.mp3"
         file_path = f"{user_id}/{file_name}"
 
-        # העלאה ישירה ל-Supabase Storage
         with open(audio_file, 'rb') as f:
             file_data = f.read()
+
         upload_response = upload_to_supabase_storage(file_path, file_data, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-        print("Upload response:", upload_response.status_code, upload_response.text)
+
         if upload_response.status_code not in [200, 201]:
             return jsonify({'error': 'Failed to upload to Supabase Storage', 'details': upload_response.text}), 500
 
-        # קבלת public URL
         public_url = f"{SUPABASE_URL}/storage/v1/object/public/recordings/{file_path}"
 
-        # שמירה במסד
         supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
         insert_res = supabase.table('recordings').insert({
             'user_id': user_id,
             'file_name': info.get('title', file_name) + '.mp3',
             'url': public_url
         }).execute()
-        print("Insert DB response:", insert_res)
-        if not insert_res.data:
-            return jsonify({'error': 'Failed to insert to DB', 'details': str(insert_res)}), 500
 
         os.remove(audio_file)
 
@@ -113,6 +104,3 @@ def download_youtube_audio():
     except Exception as e:
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
