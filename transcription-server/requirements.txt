@@ -1,6 +1,6 @@
-Flask
-yt-dlp 
-supabase 
+flask
+flask-cors
 python-dotenv
 requests
-flask_cors
+supabase
+yt-dlp
