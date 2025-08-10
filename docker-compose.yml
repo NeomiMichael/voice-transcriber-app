@@ -15,4 +15,6 @@ services:
     build: ./transcription-client
     ports:
       - "5173:5173"
+    environment:
+      - VITE_SERVER_URL=http://localhost:5000
     restart: unless-stopped

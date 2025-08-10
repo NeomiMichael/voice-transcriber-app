@@ -15,6 +15,9 @@ COPY . .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
+ENV HF_HUB_ENABLE_HF_TRANSFER=0
+ENV HF_HOME=/app/storage/hf-cache
+
 EXPOSE 5000
 
 CMD ["python", "run.py"]

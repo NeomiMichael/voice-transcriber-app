@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../supabase/supabaseClient'
+import { API_BASE_URL } from '../../../config'
 
 interface Recording {
   id: string
@@ -11,6 +12,8 @@ interface Recording {
 function MyRecordingsList() {
   const [recordings, setRecordings] = useState<Recording[]>([])
   const [loading, setLoading] = useState(true)
+  const [showModal, setShowModal] = useState(false)
+  const [currentTranscript, setCurrentTranscript] = useState<string>('')
 
   useEffect(() => {
     const fetchRecordings = async () => {
@@ -68,6 +71,26 @@ function MyRecordingsList() {
 
   return (
     <div style={{ marginTop: '30px', direction: 'rtl' }}>
+      {showModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(0,0,0,0.4)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}>
+          <div style={{ background: 'white', color: '#000', padding: 30, borderRadius: 10, minWidth: 300, maxWidth: 600 }}>
+            <h3>תמלול</h3>
+            <div style={{ maxHeight: 300, overflowY: 'auto', marginBottom: 20 }}>{currentTranscript}</div>
+            <button onClick={() => setShowModal(false)} style={{ background: '#5bc0de', color: 'white', border: 'none', padding: '8px 16px', borderRadius: 5, cursor: 'pointer' }}>סגור</button>
+          </div>
+        </div>
+      )}
       <h2>📁 הקבצים שהעליתי</h2>
       {loading ? (
         <p>⏳ טוען קבצים...</p>
@@ -97,20 +120,70 @@ function MyRecordingsList() {
 
               <audio controls src={rec.url} style={{ width: '100%', marginTop: '10px' }} />
 
-              <button
-                onClick={() => handleDelete(rec)}
-                style={{
-                  marginTop: '10px',
-                  backgroundColor: '#d9534f',
-                  color: 'white',
-                  border: 'none',
-                  padding: '6px 12px',
-                  borderRadius: '5px',
-                  cursor: 'pointer',
-                }}
-              >
-                🗑️ מחק קובץ
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', marginTop: '10px' }}>
+                <button
+                  onClick={() => handleDelete(rec)}
+                  style={{
+                    backgroundColor: '#d9534f',
+                    color: 'white',
+                    border: 'none',
+                    padding: '6px 12px',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  🗑️ מחק קובץ
+                </button>
+                <button
+  onClick={async () => {
+    setCurrentTranscript('⏳ מבצע תמלול...');
+    setShowModal(true);
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+
+      if (!token) {
+        setCurrentTranscript('שגיאה: לא נמצא טוקן התחברות');
+        return;
+      }
+
+      const res = await fetch(`${API_BASE_URL}/transcribe_audio`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          audio_url: rec.url
+        })
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        setCurrentTranscript(`❌ שגיאה: ${result.error || 'משהו השתבש'}`);
+      } else {
+        setCurrentTranscript(result.transcription || 'לא התקבל תמלול');
+      }
+    } catch (err) {
+      console.error(err);
+      setCurrentTranscript('❌ שגיאה לא צפויה בתמלול');
+    }
+  }}
+  style={{
+    backgroundColor: '#5bc0de',
+    color: 'white',
+    border: 'none',
+    padding: '6px 12px',
+    borderRadius: '5px',
+    cursor: 'pointer',
+  }}
+>
+  לתמלול
+</button>
+
+              </div>
             </li>
           ))}
         </ul>
