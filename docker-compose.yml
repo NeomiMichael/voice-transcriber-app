@@ -7,9 +7,9 @@ services:
       - "5000:5000"
     env_file:
       - ./transcription-server/.env
-    volumes:
-      - ./transcription-server/storage:/app/storage
-    restart: unless-stopped
+    # volumes:
+    #   - ./transcription-server/storage:/app/storage
+    # restart: unless-stopped
 
   client:
     build: ./transcription-client
