@@ -1,0 +1,42 @@
+/* Design Tokens: Blue-White professional theme */
+:root {
+  --color-primary: #1f5ea8; /* calmer blue */
+  --color-primary-dark: #174a86;
+  --color-accent: #3b7bd6; /* subtle accent */
+  --color-bg: #ffffff; /* whiter background */
+  --color-bg-muted: #f9fbfe; /* very light blue tint */
+  --color-surface: #ffffff;
+  --color-text: #0f2a43;
+  --color-text-muted: #5a6b7d;
+  --color-border: #d7e1ec;
+  --color-success: #2e7d32;
+  --color-danger: #c62828;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --shadow-sm: 0 1px 2px rgba(16, 33, 61, 0.04);
+  --shadow-md: 0 4px 12px rgba(16, 33, 61, 0.06);
+  --shadow-lg: 0 14px 28px rgba(16, 33, 61, 0.08);
+
+  --container-max: 1200px;
+
+  --font-sans: "Heebo", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Noto Sans Hebrew", "Segoe UI Emoji", "Apple Color Emoji", "Segoe UI Symbol", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0e1420;
+    --color-bg-muted: #121a28;
+    --color-surface: #121a28;
+    --color-text: #e6edf5;
+    --color-text-muted: #a9b7c6;
+    --color-border: #29374a;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.4);
+  }
+}
+
+

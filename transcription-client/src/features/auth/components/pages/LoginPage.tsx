@@ -9,18 +9,20 @@ function LoginPage() {
     await logoutUser()
   }
   return (
-    <div style={{ minHeight: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingTop: '60px', boxSizing: 'border-box' }}>
+    <div className="page">
+      <div className="container auth-wrapper">
       {user ? (
         <>
           <h2>ברוכה הבאה, {user.email}!</h2>
-          <button onClick={handleLogout}>התנתקות</button>
+          <button className="btn ghost" onClick={handleLogout}>התנתקות</button>
         </>
       ) : (
         <>
-          <h2>התחברי למערכת</h2>
+          <h2 className="title" style={{ textAlign: 'center' }}>התחברי למערכת</h2>
           <LoginForm />
         </>
       )}
+      </div>
     </div>
   )
 }

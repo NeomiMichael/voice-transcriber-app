@@ -16,5 +16,6 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_SERVER_URL=http://localhost:5000
+      - VITE_SERVER_URL=https://transcription-server-217066263123.us-central1.run.app
     restart: unless-stopped
+

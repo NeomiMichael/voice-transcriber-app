@@ -7,9 +7,7 @@ type RecordAudioProps = {
 }
 
 function RecordAudio({ onUploadSuccess }: RecordAudioProps) {
-    interface RecordAudioProps {
-  onUploadSuccess: () => void
-}
+  
 
   const [isRecording, setIsRecording] = useState(false)
   const [audioURL, setAudioURL] = useState<string | null>(null)

@@ -22,29 +22,30 @@ function LoginForm() {
     }
 
     return (
-        <div style={{ maxWidth: '300px', margin: '50px auto', textAlign: 'center' }}>
-            <h2>התחברות</h2>
-            <input
-                type="email"
-                placeholder="אימייל"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                style={{ display: 'block', marginBottom: '10px', width: '100%' }}
-            />
-            <input
-                type="password"
-                placeholder="סיסמה"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                style={{ display: 'block', marginBottom: '10px', width: '100%' }}
-            />
-            <button onClick={handleLogin}>התחבר</button>
+        <div className="card" style={{ textAlign: 'center' }}>
+            <div className="form">
+                <input
+                    className="input"
+                    type="email"
+                    placeholder="אימייל"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                />
+                <input
+                    className="input"
+                    type="password"
+                    placeholder="סיסמה"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                />
+                <button className="btn" onClick={handleLogin}>התחבר</button>
+            </div>
 
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-            {success && <p style={{ color: 'green' }}>{success}</p>}
+            {error && <p style={{ color: 'var(--color-danger)' }}>{error}</p>}
+            {success && <p style={{ color: 'var(--color-success)' }}>{success}</p>}
             <p style={{ marginTop: '15px' }}>
                 אין לך חשבון?
-                <Link to="/register" style={{ marginLeft: '5px' }}>להרשמה</Link>
+                <Link to="/register" style={{ marginRight: '5px' }}>להרשמה</Link>
             </p>
         </div>
     )

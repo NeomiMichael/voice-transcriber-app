@@ -42,37 +42,40 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess }) => {
     };
 
     return (
-        <form onSubmit={handleSubmit}>
-            <h2>הרשמה</h2>
-            <div>
-                <label>אימייל:</label>
-                <input
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    required
-                />
-            </div>
-            <div>
-                <label>סיסמה:</label>
-                <input
-                    type="password"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    required
-                />
-            </div>
-            {error && <div style={{ color: 'red' }}>{error}</div>}
-            {success && <div style={{ color: 'green' }}>{success}</div>}
-            <button type="submit" disabled={loading}>
-                {loading ? 'נרשם...' : 'הרשם'}
-            </button>
-            <p style={{ marginTop: '15px' }}>
-                כבר יש לך חשבון?
-                <Link to="/login" style={{ marginLeft: '5px' }}>להתחברות</Link>
-            </p>
-
-        </form>
+        <div className="card">
+            <form className="form" onSubmit={handleSubmit}>
+                <h2 className="title" style={{ textAlign: 'center' }}>הרשמה</h2>
+                <div className="form-row">
+                    <label>אימייל</label>
+                    <input
+                        className="input"
+                        type="email"
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        required
+                    />
+                </div>
+                <div className="form-row">
+                    <label>סיסמה</label>
+                    <input
+                        className="input"
+                        type="password"
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        required
+                    />
+                </div>
+                {error && <div style={{ color: 'var(--color-danger)' }}>{error}</div>}
+                {success && <div style={{ color: 'var(--color-success)' }}>{success}</div>}
+                <button className="btn" type="submit" disabled={loading}>
+                    {loading ? 'נרשם...' : 'הרשם'}
+                </button>
+                <p style={{ marginTop: '15px' }}>
+                    כבר יש לך חשבון?
+                    <Link to="/login" style={{ marginRight: '5px' }}>להתחברות</Link>
+                </p>
+            </form>
+        </div>
     );
 };
 
