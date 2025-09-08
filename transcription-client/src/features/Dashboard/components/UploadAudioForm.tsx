@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../supabase/supabaseClient'
 import { v4 as uuidv4 } from 'uuid'
+import { API_BASE_URL } from '../../../config'
 
 interface Props {
   onUploadSuccess: () => void
@@ -10,7 +11,6 @@ function UploadAudioForm({ onUploadSuccess }: Props) {
   const [file, setFile] = useState<File | null>(null)
   const [message, setMessage] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
-  const [token, setToken] = useState<string | null>(null)
   const [youtubeUrl, setYoutubeUrl] = useState('')
   const [ytMessage, setYtMessage] = useState('')
 
@@ -30,7 +30,6 @@ function UploadAudioForm({ onUploadSuccess }: Props) {
         setMessage('שגיאה בקבלת טוקן')
         return
       }
-      setToken(accessToken)
     }
 
     getSession()
@@ -103,7 +102,7 @@ if (!token) {
 
     try {
       setYtMessage('מוריד ומעלה...')
-      const res = await fetch('http://localhost:5000/download_youtube_audio', {
+      const res = await fetch(`${API_BASE_URL}/download_youtube_audio`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -130,21 +129,23 @@ if (!token) {
 
   return (
     <>
-      <form onSubmit={handleUpload} style={{ marginTop: '30px' }}>
-        <input type="file" accept="audio/*" onChange={handleFileChange} />
-        <button type="submit" style={{ marginLeft: '10px' }}>העלה</button>
+      <form className="form" onSubmit={handleUpload}>
+        <div className="actions">
+          <input className="input" type="file" accept="audio/*" onChange={handleFileChange} />
+          <button className="btn" type="submit">העלה</button>
+        </div>
         {message && <p>{message}</p>}
       </form>
 
-      <form onSubmit={handleYoutubeDownload} style={{ marginTop: '20px', direction: 'rtl' }}>
+      <form className="form" onSubmit={handleYoutubeDownload}>
         <input
+          className="input"
           type="text"
           placeholder="הדבק כאן קישור ליוטיוב"
           value={youtubeUrl}
-          onChange={e => setYoutubeUrl(e.target.value)}
-          style={{ width: '60%', marginLeft: '10px' }}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setYoutubeUrl(e.target.value)}
         />
-        <button type="submit">הורד מיוטיוב</button>
+        <button className="btn info" type="submit">הורד מיוטיוב</button>
         {ytMessage && <p>{ytMessage}</p>}
       </form>
     </>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../../supabase/supabaseClient'
 import { API_BASE_URL } from '../../../config'
+import { downloadTranscriptPdf } from '../../../utils/pdf'
 
 interface Recording {
   id: string
@@ -14,6 +15,7 @@ function MyRecordingsList() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [currentTranscript, setCurrentTranscript] = useState<string>('')
+  const [currentId, setCurrentId] = useState<string>('')
 
   useEffect(() => {
     const fetchRecordings = async () => {
@@ -70,47 +72,30 @@ function MyRecordingsList() {
   }
 
   return (
-    <div style={{ marginTop: '30px', direction: 'rtl' }}>
+    <div style={{ marginTop: '10px' }}>
       {showModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          background: 'rgba(0,0,0,0.4)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-        }}>
-          <div style={{ background: 'white', color: '#000', padding: 30, borderRadius: 10, minWidth: 300, maxWidth: 600 }}>
+        <div className="modal-backdrop">
+          <div className="modal">
             <h3>תמלול</h3>
             <div style={{ maxHeight: 300, overflowY: 'auto', marginBottom: 20 }}>{currentTranscript}</div>
-            <button onClick={() => setShowModal(false)} style={{ background: '#5bc0de', color: 'white', border: 'none', padding: '8px 16px', borderRadius: 5, cursor: 'pointer' }}>סגור</button>
+            <button className="btn info" onClick={() => setShowModal(false)}>סגור</button>
           </div>
         </div>
       )}
-      <h2>📁 הקבצים שהעליתי</h2>
+      <h2 className="title">📁 הקבצים שהעליתי</h2>
       {loading ? (
         <p>⏳ טוען קבצים...</p>
       ) : recordings.length === 0 ? (
         <p>אין קבצים להצגה</p>
       ) : (
-        <ul style={{ listStyle: 'none', padding: 0 }}>
+        <ul className="list">
           {recordings.map((rec) => (
             <li
               key={rec.id}
-              style={{
-                marginBottom: '25px',
-                border: '1px solid #ccc',
-                borderRadius: '8px',
-                padding: '10px 15px',
-                textAlign: 'right',
-              }}
+              className="list-item"
             >
               <div style={{ fontWeight: 'bold' }}>{rec.file_name}</div>
-              <div style={{ fontSize: '0.9em', color: '#666' }}>
+              <div style={{ fontSize: '0.9em', color: 'var(--color-text-muted)' }}>
                 {new Date(rec.created_at).toLocaleDateString('he-IL', {
                   year: 'numeric',
                   month: 'long',
@@ -120,21 +105,15 @@ function MyRecordingsList() {
 
               <audio controls src={rec.url} style={{ width: '100%', marginTop: '10px' }} />
 
-              <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', marginTop: '10px' }}>
+              <div className="actions" style={{ marginTop: '10px' }}>
                 <button
+                  className="btn danger"
                   onClick={() => handleDelete(rec)}
-                  style={{
-                    backgroundColor: '#d9534f',
-                    color: 'white',
-                    border: 'none',
-                    padding: '6px 12px',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                  }}
                 >
                   🗑️ מחק קובץ
                 </button>
                 <button
+  className="btn info"
   onClick={async () => {
     setCurrentTranscript('⏳ מבצע תמלול...');
     setShowModal(true);
@@ -164,24 +143,41 @@ function MyRecordingsList() {
       if (!res.ok) {
         setCurrentTranscript(`❌ שגיאה: ${result.error || 'משהו השתבש'}`);
       } else {
-        setCurrentTranscript(result.transcription || 'לא התקבל תמלול');
+        const text = result.transcription || 'לא התקבל תמלול'
+        setCurrentTranscript(text);
+        setCurrentId(rec.id)
+        try {
+          const raw = localStorage.getItem('transcripts-history')
+          const list = raw ? JSON.parse(raw) : []
+          const entry = { id: rec.id, fileName: rec.file_name, createdAt: rec.created_at }
+          const exists = list.some((x: any) => x.id === rec.id)
+          const updated = exists ? list : [entry, ...list].slice(0, 100)
+          localStorage.setItem('transcripts-history', JSON.stringify(updated))
+          localStorage.setItem(`transcript-${rec.id}`, text)
+        } catch {}
       }
     } catch (err) {
       console.error(err);
       setCurrentTranscript('❌ שגיאה לא צפויה בתמלול');
     }
   }}
-  style={{
-    backgroundColor: '#5bc0de',
-    color: 'white',
-    border: 'none',
-    padding: '6px 12px',
-    borderRadius: '5px',
-    cursor: 'pointer',
-  }}
 >
   לתמלול
 </button>
+
+                <button
+                  className="btn"
+                  onClick={() => {
+                    try {
+                      const text = currentId === rec.id ? currentTranscript : (localStorage.getItem(`transcript-${rec.id}`) || '')
+                      if (!text) {
+                        alert('אין תמלול לשמירה. בצעי תמלול תחילה.')
+                        return
+                      }
+                      downloadTranscriptPdf(rec.file_name, text)
+                    } catch {}
+                  }}
+                >הורדה כ-PDF</button>
 
               </div>
             </li>

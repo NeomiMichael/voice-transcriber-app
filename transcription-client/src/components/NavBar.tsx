@@ -15,6 +15,7 @@ const NavBar: React.FC = () => {
 
   return (
     <nav className="navbar">
+      <div className="inner">
       <div className="navbar-logo">
         <Link to="/">Voice Transcriber</Link>
       </div>
@@ -27,6 +28,7 @@ const NavBar: React.FC = () => {
         ) : (
           <button onClick={handleLogout}>יציאה</button>
         )}
+      </div>
       </div>
     </nav>
   );
