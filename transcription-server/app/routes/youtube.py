@@ -60,8 +60,9 @@ def download_youtube_audio():
         if not url:
             return jsonify({'error': 'Missing YouTube URL'}), 400
 
+        cookies_path = os.getenv('COOKIES_FILE')
         ydl_opts = {
-            'format': 'bestaudio/best',
+            'format': 'bestaudio[ext=m4a]/bestaudio/best',
             'outtmpl': os.path.join(UPLOAD_FOLDER, '%(title)s.%(ext)s'),
             'nocheckcertificate': True,
             'postprocessors': [{
@@ -70,12 +71,36 @@ def download_youtube_audio():
                 'preferredquality': '192',
             }],
             'ffmpeg_location': '/usr/bin/ffmpeg',
+            'geo_bypass': True,
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['android', 'web']
+                }
+            },
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            },
+            'sleep_interval': 1,
+            'max_sleep_interval': 5,
+            'ignoreerrors': True,
+            'no_warnings': True,
+            'extract_flat': False,
+            'writethumbnail': False,
+            'writeinfojson': False
         }
 
+        if cookies_path and os.path.exists(cookies_path):
+            ydl_opts['cookiefile'] = cookies_path
+
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            filename = ydl.prepare_filename(info)
-            audio_file = os.path.splitext(filename)[0] + '.mp3'
+            try:
+                info = ydl.extract_info(url, download=True)
+                if not info:
+                    return jsonify({'error': 'Failed to extract video info'}), 500
+                filename = ydl.prepare_filename(info)
+                audio_file = os.path.splitext(filename)[0] + '.mp3'
+            except Exception as e:
+                return jsonify({'error': f'YouTube download failed: {str(e)}'}), 500
 
         file_name = f"{uuid.uuid4()}.mp3"
         file_path = f"{user_id}/{file_name}"

@@ -20,11 +20,8 @@ _whisper_model: Optional[WhisperModel] = None
 def _load_model() -> WhisperModel:
     global _whisper_model
     if _whisper_model is None:
-        # Loads and caches the model on first use. Uses CPU by default.
-        # The model will be downloaded from Hugging Face on first run.
         device = os.getenv("WHISPER_DEVICE", "cpu")
         preferred_compute = os.getenv("WHISPER_COMPUTE_TYPE", "int8")
-        # Ensure model is downloaded and available in local cache first
         local_model_dir = ensure_model_downloaded()
         cpu_threads = int(os.getenv("WHISPER_CPU_THREADS", str(max(1, (os.cpu_count() or 4) - 1))))
         num_workers = int(os.getenv("WHISPER_NUM_WORKERS", "2"))
@@ -45,7 +42,6 @@ def _load_model() -> WhisperModel:
                 **init_kwargs,
             )
         except Exception:
-            # Fallback to float32 for maximum compatibility
             init_kwargs_fallback = dict(init_kwargs)
             init_kwargs_fallback["compute_type"] = "float32"
             _whisper_model = WhisperModel(
@@ -59,7 +55,6 @@ def transcribe_audio_from_url(audio_url: str) -> str:
     if not audio_url or not audio_url.startswith("http"):
         raise ValueError("Invalid audio_url")
 
-    # Download the audio to a temporary file
     with tempfile.NamedTemporaryFile(delete=False, suffix=".audio") as tmp_file:
         tmp_path = tmp_file.name
         # Use generous read timeout for long files to avoid truncated downloads
@@ -75,15 +70,10 @@ def transcribe_audio_from_url(audio_url: str) -> str:
             tmp_path,
             language="he",
             task="transcribe",
-            # Speed-optimized settings
-            beam_size=1,  # greedy decoding
+            beam_size=1,  
             temperature=0.0,
-            # Improve continuity and reduce accidental truncation
             condition_on_previous_text=True,
-            # Avoid VAD cutting out sung parts/music-like voice
-            vad_filter=False,
-            # Keep more borderline speech segments
-            no_speech_threshold=0.2,
+            vad_filter=False,            no_speech_threshold=0.2,
             log_prob_threshold=-1.0,
             without_timestamps=True,
             word_timestamps=False,
