@@ -3,11 +3,6 @@ import tempfile
 import requests
 from typing import Optional
 
-"""
-Workaround TLS error when downloading models via hf_transfer (Rust):
-Disable it so huggingface_hub falls back to Python requests + certifi.
-Must be set before importing libraries that may trigger downloads.
-"""
 os.environ.setdefault("HF_HUB_ENABLE_HF_TRANSFER", "0")
 
 from faster_whisper import WhisperModel
